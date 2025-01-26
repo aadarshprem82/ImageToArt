@@ -95,6 +95,7 @@ def SaveASCIIImage(imageASCII, outputPath=None, fontPath="Courier New", fontSize
         return imgByteArr, img
 
 def Fetch(file):
+    return
     temp1 = st.secrets["temp1"]
     temp2 = st.secrets["temp1"]
     password = st.secrets["secretKey"]
