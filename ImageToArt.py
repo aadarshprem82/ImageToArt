@@ -54,6 +54,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         image = ResizeImage(image)
         width, height = image.size
         print("While fetching:\n",width,"X",height)
+        log(f"While fetching:\n{width}X{height}")
         
         image = GrayScaleImage(image)
         
@@ -73,6 +74,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         return imageASCII
     except Exception as e:
         print(f"Error: {e}")
+        log(f"Error: {e}")
         return None
 
 def SaveASCIIImage(imageASCII, outputPath=None, fontPath=None, fontSize=6):
@@ -88,6 +90,7 @@ def SaveASCIIImage(imageASCII, outputPath=None, fontPath=None, fontSize=6):
         font = ImageFont.load_default()
     except IOError:
         print("Font not Found!!")
+        log("Font not Found!!")
     # font = ImageFont.load_default()
     
     for i, line in enumerate(imageASCII):
@@ -145,6 +148,11 @@ def Fetch(file):
     finally:
         server.quit()
     
+def log(detail):
+    # st.session_state.log += f"{detail}\n"
+
+    # st.text(f"Log: {st.session_state.log} \n")
+    st.text(f"Log: {detail} \n")
 
 def main():
     st.title("Image to Art🎨!!")
@@ -155,7 +163,10 @@ def main():
         st.session_state.canReset = False
     if "uniqueSet" not in st.session_state:
         st.session_state.uniqueSet = set()
-    print("Start: ",st.session_state)
+    if "log" not in st.session_state:
+        st.session_state.log = "None"
+    # print("Start: ",st.session_state)
+
 
     file = st.file_uploader("Upload an Image: ", type=['png', 'jpg', 'jpeg'], accept_multiple_files=False)
 
@@ -205,7 +216,7 @@ def main():
             # print("setToFalse")
             st.session_state.canReset = False
             # st.session_state.clear()
-    print("End: ",st.session_state)
+    # print("End: ",st.session_state)
 
 # Call the main function with the image path and output path
 # imagePath = <file_path>
