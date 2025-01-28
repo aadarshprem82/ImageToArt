@@ -45,7 +45,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         else:
             image = uploadedImage
         
-        # image = ResizeImage(image)
+        image = ResizeImage(image)
         width, height = image.size
         # print("While fetching:\n",width,"X",height)
         
