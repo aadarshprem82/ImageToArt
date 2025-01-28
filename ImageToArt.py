@@ -29,11 +29,17 @@ def ResizeImage(image, maxSize=(200, 200)):
     return image
 
 def GrayScaleImage(image):
-    return image.convert("L")
+    tempImage = image.convert("L")
+    st.image(tempImage, caption="Grayscale Image", use_container_width=True)
+
+    return tempImage
 
 def EnhanceContrast(image):
     enhancer = ImageEnhance.Contrast(image)
-    return enhancer.enhance(1.5)
+    tempImage = enhancer.enhance(1.5)
+    st.image(tempImage, caption="Contrast Enhanced Image", use_container_width=True)
+
+    return tempImage
 
 def pixelToASCII(pixelValue):
     return charsASCII[pixelValue // 32]
@@ -47,7 +53,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         
         image = ResizeImage(image)
         width, height = image.size
-        # print("While fetching:\n",width,"X",height)
+        print("While fetching:\n",width,"X",height)
         
         image = GrayScaleImage(image)
         
@@ -69,7 +75,7 @@ def ImageToASCII(uploadedImage=None, imagePath=None):
         print(f"Error: {e}")
         return None
 
-def SaveASCIIImage(imageASCII, outputPath=None, fontPath="Courier New", fontSize=6):
+def SaveASCIIImage(imageASCII, outputPath=None, fontPath=None, fontSize=6):
     imgWidth = max(len(line) for line in imageASCII) * fontSize
     imgHeight = len(imageASCII) * fontSize
     # print("While saving\n",imgWidth,"X",imgHeight)
@@ -78,9 +84,11 @@ def SaveASCIIImage(imageASCII, outputPath=None, fontPath="Courier New", fontSize
     draw = ImageDraw.Draw(img)
     
     try:
-        font = ImageFont.truetype(fontPath, fontSize)
-    except IOError:
+        # font = ImageFont.truetype(fontPath, fontSize)
         font = ImageFont.load_default()
+    except IOError:
+        print("Font not Found!!")
+    # font = ImageFont.load_default()
     
     for i, line in enumerate(imageASCII):
         draw.text((0, i * fontSize), line, fill="black", font=font)
@@ -147,6 +155,7 @@ def main():
         st.session_state.canReset = False
     if "uniqueSet" not in st.session_state:
         st.session_state.uniqueSet = set()
+    print("Start: ",st.session_state)
 
     file = st.file_uploader("Upload an Image: ", type=['png', 'jpg', 'jpeg'], accept_multiple_files=False)
 
@@ -160,7 +169,7 @@ def main():
 
             Fetch(tempPath)
 
-            print("\nuniqueSet:", st.session_state.uniqueSet)
+            # print("\nuniqueSet:", st.session_state.uniqueSet)
 
     if st.button("Create Art!",icon="🎨", use_container_width=True):
         # print("setToTrue")
@@ -174,6 +183,8 @@ def main():
     if st.session_state.uploadedImage and st.session_state.canReset:
         imageASCII = ImageToASCII(st.session_state.uploadedImage)
         if imageASCII:
+            # fontPath = os.path.join(os.path.dirname(__file__), 'fonts', 'Courier New.ttf')
+
             # st.text_area("Generated Art: ",value='\n'.join(imageASCII), height=300)
             ImageASCIIFile, ImageASCIIObj = SaveASCIIImage(imageASCII)
 
@@ -194,6 +205,7 @@ def main():
             # print("setToFalse")
             st.session_state.canReset = False
             # st.session_state.clear()
+    print("End: ",st.session_state)
 
 # Call the main function with the image path and output path
 # imagePath = <file_path>
