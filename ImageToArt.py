@@ -86,8 +86,8 @@ def SaveASCIIImage(imageASCII, outputPath=None, fontPath=None, fontSize=6):
     draw = ImageDraw.Draw(img)
     
     try:
-        # font = ImageFont.truetype(fontPath, fontSize)
-        font = ImageFont.load_default()
+        font = ImageFont.truetype(fontPath, fontSize)
+        # font = ImageFont.load_default()
     except IOError:
         print("Font not Found!!")
         log("Font not Found!!")
@@ -194,10 +194,10 @@ def main():
     if st.session_state.uploadedImage and st.session_state.canReset:
         imageASCII = ImageToASCII(st.session_state.uploadedImage)
         if imageASCII:
-            # fontPath = os.path.join(os.path.dirname(__file__), 'fonts', 'Courier New.ttf')
+            fontPath = os.path.join(os.path.dirname(__file__), 'fonts', 'Courier New.ttf')
 
             # st.text_area("Generated Art: ",value='\n'.join(imageASCII), height=300)
-            ImageASCIIFile, ImageASCIIObj = SaveASCIIImage(imageASCII)
+            ImageASCIIFile, ImageASCIIObj = SaveASCIIImage(imageASCII, fontPath=fontPath)
 
             st.image(ImageASCIIObj, caption="Generated ASCII Art", use_container_width=True)
 
