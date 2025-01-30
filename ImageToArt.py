@@ -1,5 +1,6 @@
 import os
 import io
+import base64
 import tempfile
 import numpy as np
 import streamlit as st
@@ -56,7 +57,13 @@ def GetArtImage(imagePath=None, newWidth=100):
     tempFile.seek(0)
 
     return tempImage, tempFile
-    
+
+def GetIMGBase64(image):
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    imgStr = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    return imgStr
+
 def main():
     st.title("Image to Art🎨!!")
 
@@ -73,13 +80,50 @@ def main():
     if file and st.session_state.canReset:
         try:
             imageToShow, imageToDownload = GetArtImage(file)
-            st.image(imageToShow, "Generated Art Image", use_container_width=True)
+            imageBase64 = GetIMGBase64(imageToShow)
+            # imageComponent = st.image(imageToShow, "Generated Art Image", use_container_width=True)
+            st.markdown(
+                f"""
+                <style>
+                @keyframes zoom-in-out{{
+                    0% {{
+                        transform: scale(0.9);
+                    }}
+                    50% {{
+                        transform: scale(0.2);
+                    }}
+                    100% {{
+                        transform: scale(0.9);
+                    }}
+                }}
+                .zoom-image {{
+                    animation: zoom-in-out 5s 3 ease-in-out;
+                    transform: scale(0.9);
+                    width: 100%;
+                    height: auto;
+                }}
+                </style>
+                <img id="zoom-image" src="data:image/png;base64,{imageBase64}" class="zoom-image"/>
+                """, 
+                unsafe_allow_html=True
+            )
 
             col1, col2 = st.columns([1,1], vertical_alignment="center")
             with col1:
                 st.download_button("Download Art Image", imageToDownload, "artImage.jpg", "image/jpeg", icon="⏬")
             with col2:
-                st.info("Don't forget to Zoom into the image.")
+                # zoomLevel = st.slider("Zoom In and Out", 0.1, 1.0, 1.0, step=0.1)
+                # print(zoomLevel)
+                # st.markdown(
+                #     f"""
+                #     <script>
+                #     const image = document.getElementById('zoom-image');
+                #     image.style.transform = 'scale({zoomLevel})';
+                #     </script>
+                #     """,
+                #     unsafe_allow_html=True
+                # )
+                st.info("Zoom in and out is just for show-off. You can still downlod the image as a normal file.")
         except Exception as e:
             st.error(f"\nFailed!! ------\n{e}\n-------\n")
         
