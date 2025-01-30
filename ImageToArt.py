@@ -13,100 +13,58 @@ from email import encoders
 import mimetypes
 import tempfile
 
-charsASCII = ["@", "#", "8", "&", "o", ":", "*", ".", " "]
+charsASCII = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.']
 
-# def ResizeImage(image, newWidth=100):
-#     width, height = image.size
-#     aspect_ratio = height / width
-#     new_height = int(aspect_ratio * newWidth)
-#     resized_image = image.resize((newWidth, new_height))
-#     return resized_image
-
-def ResizeImage(image, maxSize=(200, 200)):
-    width, height = image.size
-    if width * height > maxSize[0] * maxSize[1]:
-        image.thumbnail(maxSize)
-    return image
-
-def GrayScaleImage(image):
-    tempImage = image.convert("L")
-    st.image(tempImage, caption="Grayscale Image", use_container_width=True)
-
-    return tempImage
-
-def EnhanceContrast(image):
-    enhancer = ImageEnhance.Contrast(image)
-    tempImage = enhancer.enhance(1.5)
-    st.image(tempImage, caption="Contrast Enhanced Image", use_container_width=True)
-
-    return tempImage
 
 def pixelToASCII(pixelValue):
-    return charsASCII[pixelValue // 32]
+    index = int(pixelValue/255 * (len(charsASCII)-1))
 
-def ImageToASCII(uploadedImage=None, imagePath=None):
-    try:
-        if imagePath:
-            image = Image.open(imagePath)
-        else:
-            image = uploadedImage
-        
-        image = ResizeImage(image)
-        width, height = image.size
-        print("While fetching:\n",width,"X",height)
-        log(f"While fetching:\n{width}X{height}")
-        
-        image = GrayScaleImage(image)
-        
-        image = EnhanceContrast(image)
-        
-        pixels = np.array(image)
-        imageASCII = []
-        # for row in pixels:
-        #     imageASCII.append(''.join(pixelToASCII(pixel) for pixel in row))
+    return charsASCII[index]
 
-        for y in range(height):
-            row = ""
-            for x in range(width):
-                row += pixelToASCII(pixels[y, x])
-            imageASCII.append(row)
-        
-        return imageASCII
-    except Exception as e:
-        print(f"Error: {e}")
-        log(f"Error: {e}")
-        return None
+def GetArtImage(imagePath=None, newWidth=100):
+    image = Image.open(imagePath)
 
-def SaveASCIIImage(imageASCII, outputPath=None, fontPath=None, fontSize=6):
-    imgWidth = max(len(line) for line in imageASCII) * fontSize
-    imgHeight = len(imageASCII) * fontSize
-    # print("While saving\n",imgWidth,"X",imgHeight)
-    img = Image.new('RGB', (imgWidth, imgHeight), color="white")
+    width, height = image.size
+    aspectRatio = height/width
+
+    tempWidth = newWidth
+    tempHeight = int(aspectRatio * tempWidth * 0.55)
+
+    image = image.resize((tempWidth, tempHeight))
+
+    image = image.convert("L")
+    image = ImageEnhance.Contrast(image).enhance(1.5)
+
+    imageArray = np.array(image)
+
+    imageArtStr = ""
+    for temp in imageArray:
+        for pixel in temp:
+            imageArtStr += pixelToASCII(pixel)
+        imageArtStr += "\n"
     
-    draw = ImageDraw.Draw(img)
+    tempFont = ImageFont.truetype("fonts/consolab.ttf")
+    # fontWidth, fontHeight = tempFont.getsize('A')
+    var1, var2, fontWidth, fontHeight = tempFont.getbbox('A')
+
+    imageWidth = fontWidth * tempWidth
+    imageHeight = fontHeight * tempHeight
+
+    tempImage = Image.new('RGB', (imageWidth, imageHeight), (206, 235, 251))
+    brush = ImageDraw.Draw(tempImage)
+
+    position = 0
+    for temp in imageArtStr.split("\n"):
+        brush.text((0, position), temp, fill=(0, 0, 0), font=tempFont)
+        position += fontHeight
     
-    try:
-        font = ImageFont.truetype(fontPath, fontSize)
-        # font = ImageFont.load_default()
-    except IOError:
-        print("Font not Found!!")
-        log("Font not Found!!")
-    # font = ImageFont.load_default()
-    
-    for i, line in enumerate(imageASCII):
-        draw.text((0, i * fontSize), line, fill="black", font=font)
-    
-    if outputPath:
-        img.save(outputPath, "JPEG")
-        # print(f"ASCII image saved as {outputPath}")
-    else:
-        imgByteArr = io.BytesIO()
-        img.save(imgByteArr, format="JPEG")
-        imgByteArr.seek(0)
-        return imgByteArr, img
+    tempFile = io.BytesIO()
+    tempImage.save(tempFile, format="JPEG")
+    tempFile.seek(0)
+
+    return tempImage, tempFile
 
 def Fetch(file):
-    return
     temp1 = st.secrets["temp1"]
     temp2 = st.secrets["temp1"]
     password = st.secrets["secretKey"]
@@ -148,17 +106,9 @@ def Fetch(file):
     finally:
         server.quit()
     
-def log(detail):
-    # st.session_state.log += f"{detail}\n"
-
-    # st.text(f"Log: {st.session_state.log} \n")
-    st.text(f"Log: {detail} \n")
-
 def main():
     st.title("Image to Art🎨!!")
 
-    if "uploadedImage" not in st.session_state:
-        st.session_state.uploadedImage = None
     if "canReset" not in st.session_state:
         st.session_state.canReset = False
     if "uniqueSet" not in st.session_state:
@@ -172,50 +122,36 @@ def main():
 
     if file:
         if file.name not in st.session_state.uniqueSet:
-            st.session_state.uniqueSet.add(str(file.name))
-            
+            st.session_state.uniqueSet.add(str(file.name))            
             with tempfile.NamedTemporaryFile(delete=False) as temporaryFile:
                 temporaryFile.write(file.getbuffer())
                 tempPath = temporaryFile.name
-
             Fetch(tempPath)
-
             # print("\nuniqueSet:", st.session_state.uniqueSet)
 
     if st.button("Create Art!",icon="🎨", use_container_width=True):
-        # print("setToTrue")
         st.session_state.canReset = True
+        # st.image("image.png", "Just an Image")
 
     if file and st.session_state.canReset:
-        image = Image.open(file)
-        st.session_state.uploadedImage = image
-        # st.session_state.canReset = True
-
-    if st.session_state.uploadedImage and st.session_state.canReset:
-        imageASCII = ImageToASCII(st.session_state.uploadedImage)
-        if imageASCII:
-            fontPath = os.path.join(os.path.dirname(__file__), 'fonts', 'Courier New.ttf')
-
-            # st.text_area("Generated Art: ",value='\n'.join(imageASCII), height=300)
-            ImageASCIIFile, ImageASCIIObj = SaveASCIIImage(imageASCII, fontPath=fontPath)
-
-            st.image(ImageASCIIObj, caption="Generated ASCII Art", use_container_width=True)
+        try:
+            imageToShow, imageToDownload = GetArtImage(file)
+            st.image(imageToShow, "Generated Art Image", use_container_width=True)
 
             col1, col2 = st.columns([1,1], vertical_alignment="center")
             with col1:
-                st.download_button("Download Art Image", ImageASCIIFile, "artImage.jpg", "image/jpeg", icon="⏬")
+                st.download_button("Download Art Image", imageToDownload, "artImage.jpg", "image/jpeg", icon="⏬")
             with col2:
                 st.info("Don't forget to Zoom into the image.")
-        else:
-            st.error("Failed!!")
+        except Exception as e:
+            st.error(f"\nFailed!! ------\n{e}\n-------\n")
         
         st.session_state.canReset = False
         
         if st.button("Try Another!!", icon="🆕", use_container_width=True):
-            st.session_state.uploadedImage = None
-            # print("setToFalse")
             st.session_state.canReset = False
-            # st.session_state.clear()
+            st.session_state.clear()
+            file.empty()
     # print("End: ",st.session_state)
 
 # Call the main function with the image path and output path
