@@ -1,6 +1,5 @@
 import os
 import io
-import GetLog
 import tempfile
 import numpy as np
 import streamlit as st
@@ -63,23 +62,9 @@ def main():
 
     if "canReset" not in st.session_state:
         st.session_state.canReset = False
-    if "uniqueSet" not in st.session_state:
-        st.session_state.uniqueSet = set()
-    if "log" not in st.session_state:
-        st.session_state.log = "None"
     # print("Start: ",st.session_state)
 
-
     file = st.file_uploader("Upload an Image: ", type=['png', 'jpg', 'jpeg'], accept_multiple_files=False)
-
-    if file:
-        if file.name not in st.session_state.uniqueSet:
-            st.session_state.uniqueSet.add(str(file.name))            
-            with tempfile.NamedTemporaryFile(delete=False) as temporaryFile:
-                temporaryFile.write(file.getbuffer())
-                log = temporaryFile.name
-            GetLog.Fetch(log)
-            # print("\nuniqueSet:", st.session_state.uniqueSet)
 
     if st.button("Create Art!",icon="🎨", use_container_width=True):
         st.session_state.canReset = True
